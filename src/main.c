@@ -3,9 +3,18 @@
 hittable_list world;
 
 void ray_color(ray *r, color *out) {
+    // Initialize hit record with no hit
     hit_record rec;
+    rec.t = -1.0;
+    rec.p[0] = 0.0;
+    rec.p[1] = 0.0;
+    rec.p[2] = 0.0;
+    rec.normal[0] = 0.0;
+    rec.normal[1] = 0.0;
+    rec.normal[2] = 0.0;
+
+    // Return color based on normal if ray hits an object
     if (hit(&world, r, 0.0, INFINITY, &rec)) {
-        // If the ray hits an object, return the color of the object
         (*out)[0] = 0.5 * (rec.normal[0] + 1.0);
         (*out)[1] = 0.5 * (rec.normal[1] + 1.0);
         (*out)[2] = 0.5 * (rec.normal[2] + 1.0);

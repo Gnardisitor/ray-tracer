@@ -42,14 +42,23 @@ bool hit(hittable_list *list, ray *r, double ray_tmin, double ray_tmax, hit_reco
     hit_record temp_rec;
     bool hit_anything = false;
     double closest_so_far = ray_tmax;
-    rec->t = -1.0;
 
     // Iterate through all hittables in the list
     for (int i = 0; i < list->count; i++) {
         hittable *obj = &list->objects[i];
         if (obj->hit(obj->object, ray_tmin, closest_so_far, r, &temp_rec) == true) {
             hit_anything = true;
-            if (temp_rec.t < rec->t || rec->t < 0) *rec = temp_rec; // Update record with closest hit
+            // Update closest hit record if this hit is closer
+            if (temp_rec.t < rec->t || rec->t < 0) {
+                rec->t = temp_rec.t;
+                rec->p[0] = temp_rec.p[0];
+                rec->p[1] = temp_rec.p[1];
+                rec->p[2] = temp_rec.p[2];
+                rec->normal[0] = temp_rec.normal[0];
+                rec->normal[1] = temp_rec.normal[1];
+                rec->normal[2] = temp_rec.normal[2];
+                rec->front_face = temp_rec.front_face;
+            }
         }
     }
 

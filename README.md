@@ -1,6 +1,8 @@
 # Ray Tracer
 
-Simple ray tracer made in C based on "Ray Tracing in One Weekend". Compiled using Clang 20.1.8 with C99 standard.
+![Banner](banner.png)
+
+Simple ray tracer made in C based on "Ray Tracing in One Weekend". Compiled using Clang 20.1.8 with C99 standard.x
 
 ## Instructions
 
