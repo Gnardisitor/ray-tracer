@@ -1,0 +1,9 @@
+# Ignore workspace settings
+.vscode/
+
+# Ignore built files
+ray-tracer
+*.o
+
+# Ignore program output
+image.ppm
