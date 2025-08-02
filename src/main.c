@@ -1,36 +1,14 @@
-#include <stdlib.h>
+#include "main.h"
 
-#include "src/ray.h"
-#include "src/vec3.h"
-#include "src/color.h"
-
-// Create boolean type
-typedef int bool;
-#define TRUE 1
-#define FALSE 0
-
-bool hit_sphere(point3 *center, double radius, ray *r) {
-    // Compute discriminant to check if there is intersection
-    vec3 oc;
-    subtract(&r->origin, center, &oc);
-    double a = dot(&r->direction, &r->direction);
-    double b = -2.0 * dot(&r->direction, &oc);
-    double c = dot(&oc, &oc) - radius * radius;
-    double discriminant = b * b - 4 * a * c;
-
-    // Intersection exists if discriminant is non-negative
-    if (discriminant >= 0) return TRUE;
-    else return FALSE;
-}
+hittable_list world;
 
 void ray_color(ray *r, color *out) {
-    // Check if ray hits sphere
-    point3 center;
-    create(&center, 0.0, 0.0, -1.0);
-    if (hit_sphere(&center, 0.5, r) == TRUE) {
-        (*out)[0] = 1.0;
-        (*out)[1] = 0.0;
-        (*out)[2] = 0.0;
+    hit_record rec;
+    if (hit(&world, r, 0.0, INFINITY, &rec)) {
+        // If the ray hits an object, return the color of the object
+        (*out)[0] = 0.5 * (rec.normal[0] + 1.0);
+        (*out)[1] = 0.5 * (rec.normal[1] + 1.0);
+        (*out)[2] = 0.5 * (rec.normal[2] + 1.0);
         return;
     }
 
@@ -49,6 +27,11 @@ int main(void) {
     int image_width = 400;
     int image_height = (int)(image_width / aspect_ratio);
     if (image_height < 1) image_height = 1;
+
+    // Create world
+    world.count = 0;
+    add_sphere(&world, 0.0, 0.0, -1.0, 0.5);
+    add_sphere(&world, 0.0, -100.5, -1.0, 100.0);
 
     // Camera parameters
     double focal_length = 1.0;
@@ -70,9 +53,9 @@ int main(void) {
     // Calcualte location of upper left pixel
     point3 viewport_upper_left, pixel00_loc;
     // vec3 viewport_upper_left = camera_center - vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
-    viewport_upper_left[0] = camera_center[0] - viewport_u[0] / 2 - viewport_v[0] / 2;
-    viewport_upper_left[1] = camera_center[1] - viewport_u[1] / 2 - viewport_v[1] / 2;
-    viewport_upper_left[2] = camera_center[2] - focal_length - viewport_u[2] / 2 - viewport_v[2] / 2;
+    viewport_upper_left[0] = camera_center[0] - (viewport_u[0] / 2) - (viewport_v[0] / 2);
+    viewport_upper_left[1] = camera_center[1] - (viewport_u[1] / 2) - (viewport_v[1] / 2);
+    viewport_upper_left[2] = camera_center[2] - focal_length - (viewport_u[2] / 2) - (viewport_v[2] / 2);
     // vec3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     pixel00_loc[0] = viewport_upper_left[0] + 0.5 * (delta_u[0] + delta_v[0]);
     pixel00_loc[1] = viewport_upper_left[1] + 0.5 * (delta_u[1] + delta_v[1]);
