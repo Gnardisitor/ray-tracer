@@ -1,6 +1,6 @@
 # Ray Tracer
 
-![Banner](banner.png)
+<img src="banner.png" style="width:100%; display:block; margin:20px auto;" />
 
 Simple ray tracer made in C based on "Ray Tracing in One Weekend". Compiled using Clang 20.1.8 with C99 standard.x
 
