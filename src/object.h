@@ -97,7 +97,7 @@ typedef struct {
 /* OBJECT LIST DEFINITION */
 
 typedef struct {
-    hittable objects[128];
+    hittable objects[500];
     int count;
 } hittable_list;
 

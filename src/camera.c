@@ -1,3 +1,5 @@
+#include <time.h>
+
 #include "camera.h"
 
 /* CAMERA DEFINITION */
@@ -66,11 +68,20 @@ void camera_render(camera *cam, hittable_list *list, FILE *image) {
     color pixel_color, sample;
     ray r;
 
+    // Timing variables
+    clock_t start_time = clock();
+
     // Render the image
     for (int j = 0; j < cam->image_height; j++) {
-        // Show progress
+        // Show progress and estimate time left
         double percent = 100.0 * (double)(j + 1) / (double)cam->image_height;
-        printf("\rRendering %.1f%%", percent);
+        clock_t now = clock();
+        double elapsed = (double)(now - start_time) / CLOCKS_PER_SEC;
+        double estimated_total = elapsed / (percent / 100.0);
+        double time_left = estimated_total - elapsed;
+
+        // Print progress
+        printf("\rRendering %.1f%% | Elapsed: %.1fs | Left: %.1fs | Total: %.1fs", percent, elapsed, time_left, estimated_total);
         fflush(stdout);
 
         for (int i = 0; i < cam->image_width; i++) {

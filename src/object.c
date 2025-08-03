@@ -196,7 +196,7 @@ bool sphere_hit(sphere *s, interval *ray_t, ray *r, hit_record *rec) {
 
 void add_sphere(hittable_list *list, double x, double y, double z, double radius, material *mat) {
     // Check if list is full
-    if (list->count >= 128) {
+    if (list->count >= 500) {
         fprintf(stderr, "Hittable list is full\n");
         exit(EXIT_FAILURE);
     }
