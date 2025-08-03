@@ -2,13 +2,13 @@
 
 /* CAMERA DEFINITION */
 
-void camera_create(camera *cam, double x, double y, double z, int samples_per_pixel, int max_depth, double vfov, double aspect_ratio, int image_width) {
+void camera_create(camera *cam, point3 *lookfrom, point3 *lookat, vec3 *vup, int samples_per_pixel, int max_depth, double vfov, double aspect_ratio, int image_width) {
     // Initialize camera parameters
     cam->aspect_ratio = aspect_ratio;
     cam->image_width = image_width;
     cam->image_height = (int)(image_width / aspect_ratio);
     if (cam->image_height < 1) cam->image_height = 1;
-    create(&cam->center, x, y, z);
+    create(&cam->center, (*lookfrom)[0], (*lookfrom)[1], (*lookfrom)[2]);
 
     // Set samples per pixel and pixel samples scale
     cam->samples_per_pixel = samples_per_pixel;
@@ -16,15 +16,27 @@ void camera_create(camera *cam, double x, double y, double z, int samples_per_pi
     cam->max_depth = max_depth;
 
     // Calculate viewport dimensions
-    double focal_length = 1.0;
+    vec3 vector;
+    subtract(lookat, lookfrom, &vector);
+    double focal_length = length(&vector);
     double theta = DEG_TO_RAD(vfov); 
     double h = tan(theta / 2.0);
     double viewport_height = 2.0 * h * focal_length;
     double viewport_width = viewport_height * aspect_ratio;
 
+    // Calculate u,v, w unit vectors from camera coordinates
+    vec3 temp_u, temp_w;
+    subtract(lookfrom, lookat, &temp_w);
+    unit_vector(&temp_w, &cam->w);
+    cross(vup, &cam->w, &temp_u);
+    unit_vector(&temp_u, &cam->u);
+    cross(&cam->w, &cam->u, &cam->v);
+
     // Calculate vectors across viewport
-    create(&cam->viewport_u, viewport_width, 0.0, 0.0);
-    create(&cam->viewport_v, 0.0, -viewport_height, 0.0);
+    vec3 nv;
+    negate(&cam->v, &nv);
+    multiply(&cam->u, viewport_width, &cam->viewport_u);
+    multiply(&nv, viewport_height, &cam->viewport_v);
 
     // Calculate delta vectors from pixel to pixel
     divide(&cam->viewport_u, (double)image_width, &cam->delta_u);
@@ -32,9 +44,9 @@ void camera_create(camera *cam, double x, double y, double z, int samples_per_pi
 
     // Calculate location of upper left pixel
     vec3 viewport_upper_left;
-    viewport_upper_left[0] = cam->center[0] - (cam->viewport_u[0] / 2) - (cam->viewport_v[0] / 2);
-    viewport_upper_left[1] = cam->center[1] - (cam->viewport_u[1] / 2) - (cam->viewport_v[1] / 2);
-    viewport_upper_left[2] = cam->center[2] - focal_length - (cam->viewport_u[2] / 2) - (cam->viewport_v[2] / 2);
+    viewport_upper_left[0] = cam->center[0] - (focal_length * cam->w[0]) - (cam->viewport_u[0] / 2) - (cam->viewport_v[0] / 2);
+    viewport_upper_left[1] = cam->center[1] - (focal_length * cam->w[1]) - (cam->viewport_u[1] / 2) - (cam->viewport_v[1] / 2);
+    viewport_upper_left[2] = cam->center[2] - (focal_length * cam->w[2]) - (cam->viewport_u[2] / 2) - (cam->viewport_v[2] / 2);
 
     // Calculate pixel00 location
     cam->pixel00_loc[0] = viewport_upper_left[0] + 0.5 * (cam->delta_u[0] + cam->delta_v[0]);

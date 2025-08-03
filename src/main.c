@@ -44,12 +44,23 @@ int main(void) {
 
     // Create camera
     camera cam;
-    double vfov = 75.0;
+
+    // Set camera position
+    vec3 lookfrom, lookat, vup;
+    create(&lookfrom, -2.0, 2.0, 1.0);
+    create(&lookat, 0.0, 0.0, -1.0);
+    create(&vup, 0.0, 1.0, 0.0);
+
+    // Set camera parameters
+    double vfov = 20.0;
     double aspect_ratio = 16.0 / 9.0;
     int image_width = 400;
+
+    // Set samples per pixel and max depth
     int samples_per_pixel = 100;
     int max_depth = 10;
-    camera_create(&cam, 0.0, 0.0, 0.0, samples_per_pixel, max_depth, vfov, aspect_ratio, image_width);
+
+    camera_create(&cam, &lookfrom, &lookat, &vup, samples_per_pixel, max_depth, vfov, aspect_ratio, image_width);
 
     // Create image file
     FILE *image = fopen("image.ppm", "wt");
