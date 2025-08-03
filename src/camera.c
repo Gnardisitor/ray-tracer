@@ -2,7 +2,7 @@
 
 /* CAMERA DEFINITION */
 
-void camera_create(camera *cam, point3 *lookfrom, point3 *lookat, vec3 *vup, int samples_per_pixel, int max_depth, double vfov, double aspect_ratio, int image_width) {
+void camera_create(camera *cam, point3 *lookfrom, point3 *lookat, vec3 *vup, double defocus_angle, double focus_dist, int samples_per_pixel, int max_depth, double vfov, double aspect_ratio, int image_width) {
     // Initialize camera parameters
     cam->aspect_ratio = aspect_ratio;
     cam->image_width = image_width;
@@ -16,12 +16,9 @@ void camera_create(camera *cam, point3 *lookfrom, point3 *lookat, vec3 *vup, int
     cam->max_depth = max_depth;
 
     // Calculate viewport dimensions
-    vec3 vector;
-    subtract(lookat, lookfrom, &vector);
-    double focal_length = length(&vector);
     double theta = DEG_TO_RAD(vfov); 
     double h = tan(theta / 2.0);
-    double viewport_height = 2.0 * h * focal_length;
+    double viewport_height = 2.0 * h * focus_dist;
     double viewport_width = viewport_height * aspect_ratio;
 
     // Calculate u,v, w unit vectors from camera coordinates
@@ -44,14 +41,21 @@ void camera_create(camera *cam, point3 *lookfrom, point3 *lookat, vec3 *vup, int
 
     // Calculate location of upper left pixel
     vec3 viewport_upper_left;
-    viewport_upper_left[0] = cam->center[0] - (focal_length * cam->w[0]) - (cam->viewport_u[0] / 2) - (cam->viewport_v[0] / 2);
-    viewport_upper_left[1] = cam->center[1] - (focal_length * cam->w[1]) - (cam->viewport_u[1] / 2) - (cam->viewport_v[1] / 2);
-    viewport_upper_left[2] = cam->center[2] - (focal_length * cam->w[2]) - (cam->viewport_u[2] / 2) - (cam->viewport_v[2] / 2);
+    viewport_upper_left[0] = cam->center[0] - (focus_dist * cam->w[0]) - (cam->viewport_u[0] / 2) - (cam->viewport_v[0] / 2);
+    viewport_upper_left[1] = cam->center[1] - (focus_dist * cam->w[1]) - (cam->viewport_u[1] / 2) - (cam->viewport_v[1] / 2);
+    viewport_upper_left[2] = cam->center[2] - (focus_dist * cam->w[2]) - (cam->viewport_u[2] / 2) - (cam->viewport_v[2] / 2);
 
     // Calculate pixel00 location
     cam->pixel00_loc[0] = viewport_upper_left[0] + 0.5 * (cam->delta_u[0] + cam->delta_v[0]);
     cam->pixel00_loc[1] = viewport_upper_left[1] + 0.5 * (cam->delta_u[1] + cam->delta_v[1]);
     cam->pixel00_loc[2] = viewport_upper_left[2] + 0.5 * (cam->delta_u[2] + cam->delta_v[2]);
+
+    // Calculate defocus disk vectors
+    cam->defocus_angle = defocus_angle;
+    cam->focus_dist = focus_dist;
+    double defocus_radius = focus_dist * tan(DEG_TO_RAD(defocus_angle) / 2.0);
+    multiply(&cam->u, defocus_radius, &cam->defocus_disk_u);
+    multiply(&cam->v, defocus_radius, &cam->defocus_disk_v);
 }
 
 void camera_render(camera *cam, hittable_list *list, FILE *image) {
@@ -103,13 +107,29 @@ void get_ray(camera *cam, int i, int j, ray *out_ray) {
     pixel_sample[1] = cam->pixel00_loc[1] + ((i + offset[0]) * cam->delta_u[1]) + ((j + offset[1]) * cam->delta_v[1]);
     pixel_sample[2] = cam->pixel00_loc[2] + ((i + offset[0]) * cam->delta_u[2]) + ((j + offset[1]) * cam->delta_v[2]);
 
-    // Set ray from camera center to pixel sample
-    (*out_ray).origin[0] = cam->center[0];
-    (*out_ray).origin[1] = cam->center[1];
-    (*out_ray).origin[2] = cam->center[2];
-    (*out_ray).direction[0] = pixel_sample[0] - cam->center[0];
-    (*out_ray).direction[1] = pixel_sample[1] - cam->center[1];
-    (*out_ray).direction[2] = pixel_sample[2] - cam->center[2];
+    // If defocus angle is set, sample a point on the defocus disk
+    vec3 ray_origin;
+    if (cam->defocus_angle > 0.0) {
+        // Sample a point on the defocus disk
+        defocus_disk_sample(cam, &ray_origin);
+    } else {
+        // Use camera center as ray origin
+        ray_origin[0] = cam->center[0];
+        ray_origin[1] = cam->center[1];
+        ray_origin[2] = cam->center[2];
+    }
+
+    // Create out ray
+    ray_create(out_ray, &ray_origin, &pixel_sample);
+    subtract(&pixel_sample, &ray_origin, &out_ray->direction);
+}
+
+void defocus_disk_sample(camera *cam, point3 *out) {
+    vec3 p;
+    random_in_unit_disk(&p);
+    (*out)[0] = cam->center[0] + (cam->defocus_disk_u[0] * p[0]) + (cam->defocus_disk_v[0] * p[1]);
+    (*out)[1] = cam->center[1] + (cam->defocus_disk_u[1] * p[0]) + (cam->defocus_disk_v[1] * p[1]);
+    (*out)[2] = cam->center[2] + (cam->defocus_disk_u[2] * p[0]) + (cam->defocus_disk_v[2] * p[1]);
 }
 
 void ray_color(ray *r, int depth, hittable_list *list, color *out) {

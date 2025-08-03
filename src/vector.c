@@ -139,6 +139,17 @@ void refract(vec3 *uv, vec3 *n, double etai_over_etat, vec3 *out) {
     add(&r_out_perp, &r_out_parallel, out);
 }
 
+void random_in_unit_disk(vec3 *a) {
+    while (true) {
+        vec3 p;
+        create(&p, RAND_DOUBLE_RANGE(-1.0, 1.0), RAND_DOUBLE_RANGE(-1.0, 1.0), 0.0);
+        if (length_square(&p) < 1.0) {
+            create(a, p[0], p[1], p[2]);
+            return;
+        }
+    }
+}
+
 /* RAY DEFINITION */
 
 void ray_create(ray *r, point3 *origin, vec3 *direction) {

@@ -28,20 +28,6 @@ int main(void) {
     add_sphere(&world, -1.0, 0.0, -1.0, 0.4, &material_bubble);
     add_sphere(&world, 1.0, 0.0, -1.0, 0.5, &material_right);
 
-    /*
-    double R = cos(PI / 4.0);
-    material material_left, material_right;
-    color left_color = {0.0, 0.0, 1.0};
-    color right_color = {1.0, 0.0, 0.0};
-    create_lambertian(&material_left, &left_color);
-    create_lambertian(&material_right, &right_color);
-
-    hittable_list world;
-    world.count = 0;
-    add_sphere(&world, -R, 0.0, -1.0, R, &material_left);
-    add_sphere(&world, R, 0.0, -1.0, R, &material_right);
-    */
-
     // Create camera
     camera cam;
 
@@ -56,11 +42,15 @@ int main(void) {
     double aspect_ratio = 16.0 / 9.0;
     int image_width = 400;
 
+    // Defocus blur parameters
+    double defocus_angle = 10.0;
+    double focus_dist = 3.4;
+
     // Set samples per pixel and max depth
     int samples_per_pixel = 100;
-    int max_depth = 10;
+    int max_depth = 50;
 
-    camera_create(&cam, &lookfrom, &lookat, &vup, samples_per_pixel, max_depth, vfov, aspect_ratio, image_width);
+    camera_create(&cam, &lookfrom, &lookat, &vup, defocus_angle, focus_dist, samples_per_pixel, max_depth, vfov, aspect_ratio, image_width);
 
     // Create image file
     FILE *image = fopen("image.ppm", "wt");

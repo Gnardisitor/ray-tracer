@@ -29,6 +29,7 @@ void random_on_hemisphere(vec3 *a, vec3 *normal);
 bool near_zero(vec3 *a);
 void reflect(vec3 *v, vec3 *n, vec3 *out);
 void refract(vec3 *uv, vec3 *n, double etai_over_etat, vec3 *out);
+void random_in_unit_disk(vec3 *a);
 
 /* RAY DEFINITION */
 
