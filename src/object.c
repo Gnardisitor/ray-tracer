@@ -31,6 +31,8 @@ double clamp(interval *i, double x) {
 
 /* MATERIAL DEFINITION */
 
+/* LAMBERTIAN MATERIAL DEFINITION */
+
 void create_lambertian(material *mat, color *albedo) {
     mat->type = LAMBERTIAN;
     mat->data = malloc(sizeof(lambertian_data));
@@ -64,7 +66,9 @@ bool lambertian_scatter(ray *r, hit_record *rec, color *attenuation, ray *scatte
     return true; // Always scatter for lambertian material
 }
 
-void create_metal(material *mat, color *albedo) {
+/* METAL MATERIAL DEFINITION */
+
+void create_metal(material *mat, color *albedo, double fuzz) {
     mat->type = METAL;
     mat->data = malloc(sizeof(metal_data));
     if (mat->data == NULL) {
@@ -72,13 +76,20 @@ void create_metal(material *mat, color *albedo) {
         exit(EXIT_FAILURE);
     }
     create(&(((metal_data *)mat->data)->albedo), (*albedo)[0], (*albedo)[1], (*albedo)[2]);
+    ((metal_data *)mat->data)->fuzz = fuzz;
     mat->scatter = metal_scatter;
 }
 
 bool metal_scatter(ray *r, hit_record *rec, color *attenuation, ray *scattered) {
     // Find reflected direction
-    vec3 reflected;
+    vec3 reflected, unit, fuzzed;
     reflect(&r->direction, &rec->normal, &reflected);
+
+    // Add fuzz to the reflected direction
+    random_unit_vector(&unit);
+    multiply(&unit, ((metal_data *)rec->mat->data)->fuzz, &fuzzed);
+    unit_vector(&reflected, &unit);
+    add(&reflected, &fuzzed, &reflected);
 
     // Create scattered ray
     create(attenuation, ((metal_data *)rec->mat->data)->albedo[0], ((metal_data *)rec->mat->data)->albedo[1], ((metal_data *)rec->mat->data)->albedo[2]);
@@ -86,6 +97,55 @@ bool metal_scatter(ray *r, hit_record *rec, color *attenuation, ray *scattered) 
     create(&scattered->direction, reflected[0], reflected[1], reflected[2]);
 
     return true; // Always scatter for metal material
+}
+
+/* DIELECTRIC MATERIAL DEFINITION */
+
+void create_dielectric(material *mat, double refraction_index) {
+    mat->type = DIELECTRIC;
+    mat->data = malloc(sizeof(dielectric_data));
+    if (mat->data == NULL) {
+        fprintf(stderr, "Memory allocation failed for dielectric data\n");
+        exit(EXIT_FAILURE);
+    }
+    ((dielectric_data *)mat->data)->refraction_index = refraction_index;
+    mat->scatter = dielectric_scatter;
+}
+
+bool dielectric_scatter(ray *r, hit_record *rec, color *attenuation, ray *scattered) {
+    // Attenuation is always white for dielectric
+    create(attenuation, 1.0, 1.0, 1.0);
+
+    // Calculate refraction indices
+    double ri = ((dielectric_data *)rec->mat->data)->refraction_index;
+    if (rec->front_face == true) ri = 1.0 / ri;
+
+    // Check for total internal reflection
+    vec3 unit_direction, nunit_direction, direction;
+    unit_vector(&r->direction, &unit_direction);
+    negate(&unit_direction, &nunit_direction);
+    double cos_theta = fmin(dot(&nunit_direction, &rec->normal), 1.0);
+    double sin_theta = sqrt(1.0 - (cos_theta * cos_theta));
+
+    // Check if total internal reflection occurs
+    if (ri * sin_theta > 1.0 || reflectance(cos_theta, ri) > RAND_DOUBLE) {
+        reflect(&unit_direction, &rec->normal, &direction);
+    } 
+    else {
+        refract(&unit_direction, &rec->normal, ri, &direction);
+    }
+
+    // Create scattered ray
+    ray_create(scattered, &rec->p, &direction);
+
+    return true; // Always scatter for dielectric material
+}
+
+double reflectance(double cosine, double refraction_index) {
+    // Use Schlick's approximation for reflectance
+    double r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
+    r0 = r0 * r0;
+    return r0 + (1.0 - r0) * pow((1.0 - cosine), 5);
 }
 
 /* SPHERE DEFINITION */

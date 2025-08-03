@@ -1,9 +1,8 @@
 #include "camera.h"
-#include "main.h"
 
 /* CAMERA DEFINITION */
 
-void camera_create(camera *cam, double x, double y, double z, int samples_per_pixel, int max_depth, double aspect_ratio, int image_width) {
+void camera_create(camera *cam, double x, double y, double z, int samples_per_pixel, int max_depth, double vfov, double aspect_ratio, int image_width) {
     // Initialize camera parameters
     cam->aspect_ratio = aspect_ratio;
     cam->image_width = image_width;
@@ -18,7 +17,9 @@ void camera_create(camera *cam, double x, double y, double z, int samples_per_pi
 
     // Calculate viewport dimensions
     double focal_length = 1.0;
-    double viewport_height = 2.0;
+    double theta = DEG_TO_RAD(vfov); 
+    double h = tan(theta / 2.0);
+    double viewport_height = 2.0 * h * focal_length;
     double viewport_width = viewport_height * aspect_ratio;
 
     // Calculate vectors across viewport

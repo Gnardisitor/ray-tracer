@@ -37,6 +37,7 @@ double clamp(interval *i, double x);
 
 typedef enum {
     LAMBERTIAN,
+    DIELECTRIC,
     METAL
 } material_type;
 
@@ -57,10 +58,23 @@ bool lambertian_scatter(ray *r, hit_record *rec, color *attenuation, ray *scatte
 
 /* METAL MATERIAL DEFINITION */
 
-typedef lambertian_data metal_data;
+typedef struct {
+    color albedo;
+    double fuzz;
+} metal_data;
 
-void create_metal(material *mat, color *albedo);
+void create_metal(material *mat, color *albedo, double fuzz);
 bool metal_scatter(ray *r, hit_record *rec, color *attenuation, ray *scattered);
+
+/* DIELECTRIC MATERIAL DEFINITION */
+
+typedef struct {
+    double refraction_index;
+} dielectric_data;
+
+void create_dielectric(material *mat, double refraction_index);
+bool dielectric_scatter(ray *r, hit_record *rec, color *attenuation, ray *scattered);
+double reflectance(double cosine, double refraction_index);
 
 /* SPHERE DEFINITION */
 

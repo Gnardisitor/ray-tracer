@@ -116,6 +116,29 @@ void reflect(vec3 *v, vec3 *n, vec3 *out) {
     (*out)[2] = (*v)[2] - 2 * dot_product * (*n)[2];
 }
 
+void refract(vec3 *uv, vec3 *n, double etai_over_etat, vec3 *out) {
+    // Find angle
+    vec3 nuv;
+    negate(uv, &nuv);
+    double cos_theta = fmin(dot(&nuv, n), 1.0);
+
+    // Calculate the perpendicular component
+    vec3 r_out_perp;
+    r_out_perp[0] = etai_over_etat * (((*uv)[0]) + (cos_theta * (*n)[0]));
+    r_out_perp[1] = etai_over_etat * (((*uv)[1]) + (cos_theta * (*n)[1]));
+    r_out_perp[2] = etai_over_etat * (((*uv)[2]) + (cos_theta * (*n)[2]));
+
+    // Calculate the parallel component
+    vec3 r_out_parallel;
+    double len_sqrt = length_square(&r_out_perp);
+    r_out_parallel[0] = -sqrt(fabs(1.0 - len_sqrt)) * (*n)[0];
+    r_out_parallel[1] = -sqrt(fabs(1.0 - len_sqrt)) * (*n)[1];
+    r_out_parallel[2] = -sqrt(fabs(1.0 - len_sqrt)) * (*n)[2];
+
+    // Add the two components to get the refracted vector
+    add(&r_out_perp, &r_out_parallel, out);
+}
+
 /* RAY DEFINITION */
 
 void ray_create(ray *r, point3 *origin, vec3 *direction) {
