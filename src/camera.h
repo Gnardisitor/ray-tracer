@@ -5,8 +5,9 @@
 #include "color.h"
 
 typedef struct {
+    double pixel_samples_scale;
+    int samples_per_pixel;
     double aspect_ratio;
-    double focal_length;
     int image_height;
     int image_width;
     point3 center;
@@ -17,8 +18,10 @@ typedef struct {
     vec3 delta_v;
 } camera;
 
-void camera_create(camera *cam, double x, double y, double z, double aspect_ratio, int image_width);
+void camera_create(camera *cam, double x, double y, double z, int samples_per_pixel, double aspect_ratio, int image_width);
 void camera_render(camera *cam, hittable_list *list, FILE *image);
+void get_ray(camera *cam, int i, int j, ray *out_ray);
+void sample_square(vec3 *out);
 void ray_color(ray *r, hittable_list *list, color *out);
 
 #endif

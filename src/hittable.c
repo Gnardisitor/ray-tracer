@@ -24,6 +24,12 @@ bool surrounds(interval *i, double x) {
     return i->tmin < x && x < i->tmax;
 }
 
+double clamp(interval *i, double x) {
+    if (x < i->tmin) return i->tmin;
+    if (x > i->tmax) return i->tmax;
+    return x;
+}
+
 /* Hittable object list definition */
 
 void add_sphere(hittable_list *list, double x, double y, double z, double radius) {

@@ -2,6 +2,8 @@
 #define COLOR_H
 
 #include <stdio.h>
+
+#include "hittable.h"
 #include "vec3.h"
 
 typedef vec3 color;
