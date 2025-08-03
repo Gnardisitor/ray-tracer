@@ -43,13 +43,13 @@ void create_lambertian(material *mat, color *albedo) {
 }
 
 bool lambertian_scatter(ray *r, hit_record *rec, color *attenuation, ray *scattered) {
-    // Uselss check to allow to compile (r not used since random scatter direction)
+    // Uselss check to compile (r not used since random scatter direction)
     if (r == NULL) exit(EXIT_FAILURE);
 
     // Find scatter direction
     vec3 scatter_direction, unit;
     random_unit_vector(&unit);
-    add(&rec->p, &unit, &scatter_direction);
+    add(&rec->normal, &unit, &scatter_direction);
 
     // Catch degenerate scatter direction
     if (near_zero(&scatter_direction)) {
