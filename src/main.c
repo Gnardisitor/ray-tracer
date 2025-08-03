@@ -10,9 +10,10 @@ int main(void) {
     // Create camera
     camera cam;
     double aspect_ratio = 16.0 / 9.0;
-    int samples_per_pixel = 10;
+    int samples_per_pixel = 100;
+    int max_depth = 10;
     int image_width = 400;
-    camera_create(&cam, 0.0, 0.0, 0.0, samples_per_pixel, aspect_ratio, image_width);
+    camera_create(&cam, 0.0, 0.0, 0.0, samples_per_pixel, max_depth, aspect_ratio, image_width);
 
     // Create image file
     FILE *image = fopen("image.ppm", "wt");

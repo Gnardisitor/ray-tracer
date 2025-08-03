@@ -1,7 +1,7 @@
 #include "camera.h"
 #include "main.h"
 
-void camera_create(camera *cam, double x, double y, double z, int samples_per_pixel, double aspect_ratio, int image_width) {
+void camera_create(camera *cam, double x, double y, double z, int samples_per_pixel, int max_depth, double aspect_ratio, int image_width) {
     // Initialize camera parameters
     cam->aspect_ratio = aspect_ratio;
     cam->image_width = image_width;
@@ -12,6 +12,7 @@ void camera_create(camera *cam, double x, double y, double z, int samples_per_pi
     // Set samples per pixel and pixel samples scale
     cam->samples_per_pixel = samples_per_pixel;
     cam->pixel_samples_scale = 1.0 / (double)samples_per_pixel;
+    cam->max_depth = max_depth;
 
     // Calculate viewport dimensions
     double focal_length = 1.0;
@@ -43,39 +44,34 @@ void camera_render(camera *cam, hittable_list *list, FILE *image) {
     fprintf(image, "P3\n%d %d\n255\n", cam->image_width, cam->image_height);
 
     // Create variables for pixel color and ray
-    //point3 pixel_center;
-    //vec3 ray_direction;
-    color pixel_color;
+    color pixel_color, sample;
     ray r;
 
     // Render the image
     for (int j = 0; j < cam->image_height; j++) {
+        // Show progress
+        double percent = 100.0 * (double)(j + 1) / (double)cam->image_height;
+        printf("\rRendering %.1f%%", percent);
+        fflush(stdout);
+
         for (int i = 0; i < cam->image_width; i++) {
-            /*
-            // Calculate pixel center location
-            pixel_center[0] = cam->pixel00_loc[0] + (i * cam->delta_u[0]) + (j * cam->delta_v[0]);
-            pixel_center[1] = cam->pixel00_loc[1] + (i * cam->delta_u[1]) + (j * cam->delta_v[1]);
-            pixel_center[2] = cam->pixel00_loc[2] + (i * cam->delta_u[2]) + (j * cam->delta_v[2]);
-
-            // Calculate ray direction and create ray
-            subtract(&pixel_center, &cam->center, &ray_direction);
-            ray_create(&r, &cam->center, &ray_direction);
-
-            // Calculate color for the ray and write to image
-            ray_color(&r, list, &pixel_color);
-            write_color(image, &pixel_color);
-            */
+            // Set pixel color to black to begin
             create(&pixel_color, 0.0, 0.0, 0.0);
+
+            // Accumulate color for each sample
             for (int s = 0; s < cam->samples_per_pixel; s++) {
                 get_ray(cam, i, j, &r);
-                ray_color(&r, list, &pixel_color);
+                ray_color(&r, cam->max_depth, list, &sample);
+                add(&pixel_color, &sample, &pixel_color);
             }
+
+            // Scale pixel color by samples per pixel and write to image
             multiply(&pixel_color, cam->pixel_samples_scale, &pixel_color);
             write_color(image, &pixel_color);
         }
     }
 
-    printf("Image finished rendering\n");
+    printf("\nImage finished rendering\n");
 }
 
 void sample_square(vec3 *out) {
@@ -101,7 +97,15 @@ void get_ray(camera *cam, int i, int j, ray *out_ray) {
     (*out_ray).direction[2] = pixel_sample[2] - cam->center[2];
 }
 
-void ray_color(ray *r, hittable_list *list, color *out) {
+void ray_color(ray *r, int depth, hittable_list *list, color *out) {
+    // Check for maximum recursion depth
+    if (depth <= 0) {
+        (*out)[0] = 0.0;
+        (*out)[1] = 0.0;
+        (*out)[2] = 0.0;
+        return;
+    }
+
     // Initialize hit record with no hit
     hit_record rec;
     rec.t = -1.0;
@@ -113,11 +117,29 @@ void ray_color(ray *r, hittable_list *list, color *out) {
     rec.normal[2] = 0.0;
 
     // Return color based on normal if ray hits an object
-    interval ray_t = {0.0, INFINITY};
+    interval ray_t = {0.001, INFINITY};
     if (hit(list, r, &ray_t, &rec)) {
-        (*out)[0] += 0.5 * (rec.normal[0] + 1.0);
-        (*out)[1] += 0.5 * (rec.normal[1] + 1.0);
-        (*out)[2] += 0.5 * (rec.normal[2] + 1.0);
+        // Find bounce direction on hemisphere
+        vec3 direction;
+        random_on_hemisphere(&direction, &rec.normal);
+
+        // Create bounce ray from hit point
+        ray bounce_ray;
+        bounce_ray.origin[0] = rec.p[0];
+        bounce_ray.origin[1] = rec.p[1];
+        bounce_ray.origin[2] = rec.p[2];
+        bounce_ray.direction[0] = direction[0];
+        bounce_ray.direction[1] = direction[1];
+        bounce_ray.direction[2] = direction[2];
+
+        // Recursively get color from bounce ray
+        color bounce_color;
+        ray_color(&bounce_ray, depth - 1, list, &bounce_color);
+
+        // Scale bounce color by normal
+        (*out)[0] = 0.5 * bounce_color[0];
+        (*out)[1] = 0.5 * bounce_color[1];
+        (*out)[2] = 0.5 * bounce_color[2];
         return;
     }
 
@@ -125,7 +147,7 @@ void ray_color(ray *r, hittable_list *list, color *out) {
     vec3 unit_direction;
     unit_vector(&r->direction, &unit_direction);
     double a = 0.5 * (unit_direction[1] + 1.0);
-    (*out)[0] += (1.0 - a) + a * 0.5;
-    (*out)[1] += (1.0 - a) + a * 0.7;
-    (*out)[2] += (1.0 - a) + a * 1.0;
+    (*out)[0] = (1.0 - a) + a * 0.5;
+    (*out)[1] = (1.0 - a) + a * 0.7;
+    (*out)[2] = (1.0 - a) + a * 1.0;
 }

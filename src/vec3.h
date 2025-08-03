@@ -16,5 +16,8 @@ void cross(vec3 *a, vec3 *b, vec3 *out);
 double dot(vec3 *a, vec3 *b);
 double length_square(vec3 *a);
 double length(vec3 *a);
-
+void random(vec3 *a);
+void random_range(vec3 *a, double min, double max);
+void random_unit_vector(vec3 *a);
+void random_on_hemisphere(vec3 *a, vec3 *normal);
 #endif

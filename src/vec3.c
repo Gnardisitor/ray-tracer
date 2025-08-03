@@ -1,4 +1,5 @@
 #include "vec3.h"
+#include "main.h"
 
 void create(vec3 *a, double x, double y, double z) {
     (*a)[0] = x;
@@ -66,4 +67,37 @@ void unit_vector(vec3 *a, vec3 *out) {
         (*out)[1] = 0.0;
         (*out)[2] = 0.0;
     }
+}
+
+void random(vec3 *a) {
+    (*a)[0] = RAND_DOUBLE;
+    (*a)[1] = RAND_DOUBLE;
+    (*a)[2] = RAND_DOUBLE;
+}
+
+void random_range(vec3 *a, double min, double max) {
+    (*a)[0] = RAND_DOUBLE_RANGE(min, max);
+    (*a)[1] = RAND_DOUBLE_RANGE(min, max);
+    (*a)[2] = RAND_DOUBLE_RANGE(min, max);
+}
+
+void random_unit_vector(vec3 *a) {
+    vec3 p;
+    while (true) {
+        random_range(&p, -1.0, 1.0);
+        double lensq = length_square(&p);
+        if (1e-160 < lensq && lensq <= 1.0) {
+            divide(&p, sqrt(lensq), a);
+            return;
+        }
+    }
+}
+
+void random_on_hemisphere(vec3 *a, vec3 *normal) {
+    vec3 on_unit_sphere;
+    random_unit_vector(&on_unit_sphere);
+
+    // Ensure the point is on the same hemisphere as the normal
+    if (dot(&on_unit_sphere, normal) > 0.0) create(a, on_unit_sphere[0], on_unit_sphere[1], on_unit_sphere[2]);
+    else negate(&on_unit_sphere, a);
 }
