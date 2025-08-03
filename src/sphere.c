@@ -8,7 +8,7 @@ void sphere_create(sphere *s, point3 *center, double radius) {
     else s->radius = radius;
 }
 
-bool sphere_hit(sphere *s, double ray_tmin, double ray_tmax, ray *r, hit_record *rec) {
+bool sphere_hit(sphere *s, interval *ray_t, ray *r, hit_record *rec) {
     // Compute discriminant
     vec3 oc;
     subtract(&s->center, &r->origin, &oc);
@@ -23,9 +23,9 @@ bool sphere_hit(sphere *s, double ray_tmin, double ray_tmax, ray *r, hit_record 
     // Find the nearest intersection point
     double sqrtd = sqrt(discriminant);
     double root = (h - sqrtd) / a;
-    if (root <= ray_tmin || ray_tmax <= root) {
+    if (surrounds(ray_t, root) == false) {
         root = (h + sqrtd) / a;
-        if (root <= ray_tmin || ray_tmax <= root) return false;
+        if (surrounds(ray_t, root) == false) return false;
     }
 
     // Add hit to record

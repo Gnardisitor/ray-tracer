@@ -9,6 +9,6 @@ typedef struct sphere {
 } sphere;
 
 void sphere_create(sphere *s, point3 *center, double radius);
-bool sphere_hit(sphere *s, double ray_tmin, double ray_tmax, ray *r, hit_record *rec);
+bool sphere_hit(sphere *s, interval *ray_t, ray *r, hit_record *rec);
 
 #endif

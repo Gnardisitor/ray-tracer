@@ -10,6 +10,20 @@ void set_face_normal(ray *r, vec3 *outward_normal, hit_record *rec) {
     else create(&rec->normal, (*outward_normal)[0], (*outward_normal)[1], (*outward_normal)[2]);
 }
 
+/* Interval definition */
+
+double size(interval *i) {
+    return i->tmax - i->tmin;
+}
+
+bool contains(interval *i, double x) {
+    return i->tmin <= x && x <= i->tmax;
+}
+
+bool surrounds(interval *i, double x) {
+    return i->tmin < x && x < i->tmax;
+}
+
 /* Hittable object list definition */
 
 void add_sphere(hittable_list *list, double x, double y, double z, double radius) {
@@ -31,34 +45,42 @@ void add_sphere(hittable_list *list, double x, double y, double z, double radius
     point3 center = {x, y, z};
     sphere_create(s, &center, radius);
     h->object = s;
-    h->hit = (bool (*)(void *, double, double, ray *, hit_record *))sphere_hit;
+    h->hit = (bool (*)(void *, interval *, ray *, hit_record *))sphere_hit;
 
     // Add hittable to list
     list->objects[list->count] = *h;
     list->count++;
 }
 
-bool hit(hittable_list *list, ray *r, double ray_tmin, double ray_tmax, hit_record *rec) {
+bool hit(hittable_list *list, ray *r, interval *ray_t, hit_record *rec) {
     hit_record temp_rec;
+    interval current_t;
     bool hit_anything = false;
-    double closest_so_far = ray_tmax;
+    double closest_so_far = ray_t->tmax;
 
     // Iterate through all hittables in the list
     for (int i = 0; i < list->count; i++) {
         hittable *obj = &list->objects[i];
-        if (obj->hit(obj->object, ray_tmin, closest_so_far, r, &temp_rec) == true) {
+
+        // Create interval for current hittable
+        current_t.tmin = ray_t->tmin;
+        current_t.tmax = closest_so_far;
+
+        // Check if hit
+        if (obj->hit(obj->object, &current_t, r, &temp_rec) == true) {
+            // Update closest hit
             hit_anything = true;
-            // Update closest hit record if this hit is closer
-            if (temp_rec.t < rec->t || rec->t < 0) {
-                rec->t = temp_rec.t;
-                rec->p[0] = temp_rec.p[0];
-                rec->p[1] = temp_rec.p[1];
-                rec->p[2] = temp_rec.p[2];
-                rec->normal[0] = temp_rec.normal[0];
-                rec->normal[1] = temp_rec.normal[1];
-                rec->normal[2] = temp_rec.normal[2];
-                rec->front_face = temp_rec.front_face;
-            }
+            closest_so_far = temp_rec.t;
+
+            // Update closest hit record
+            rec->t = temp_rec.t;
+            rec->p[0] = temp_rec.p[0];
+            rec->p[1] = temp_rec.p[1];
+            rec->p[2] = temp_rec.p[2];
+            rec->normal[0] = temp_rec.normal[0];
+            rec->normal[1] = temp_rec.normal[1];
+            rec->normal[2] = temp_rec.normal[2];
+            rec->front_face = temp_rec.front_face;
         }
     }
 

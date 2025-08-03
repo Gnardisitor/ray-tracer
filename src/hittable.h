@@ -18,11 +18,22 @@ typedef struct {
 
 void set_face_normal(ray *r, vec3 *outward_normal, hit_record *rec);
 
+/* Interval definition */
+
+typedef struct {
+    double tmin;
+    double tmax;
+} interval;
+
+double size(interval *i);
+bool contains(interval *i, double x);
+bool surrounds(interval *i, double x);
+
 /* Hittable object definition */
 
 typedef struct {
     void *object;
-    bool (*hit)(void *object, double ray_tmin, double ray_tmax, ray *r, hit_record *rec);
+    bool (*hit)(void *object, interval *i, ray *r, hit_record *rec);
 } hittable;
 
 /* Hittable object list definition */
@@ -33,6 +44,6 @@ typedef struct {
 } hittable_list;
 
 void add_sphere(hittable_list *list, double x, double y, double z, double radius);
-bool hit(hittable_list *list, ray *r, double ray_tmin, double ray_tmax, hit_record *rec);
+bool hit(hittable_list *list, ray *r, interval *ray_t, hit_record *rec);
 
 #endif

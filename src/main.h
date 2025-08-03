@@ -2,6 +2,7 @@
 #define MAIN_H
 
 #include "hittable.h"
+#include "camera.h"
 #include "sphere.h"
 #include "color.h"
 #include "vec3.h"
