@@ -165,26 +165,6 @@ void ray_color(ray *r, int depth, hittable_list *list, color *out) {
     // Return color based on normal if ray hits an object
     interval ray_t = {0.001, INFINITY};
     if (hit(list, r, &ray_t, &rec)) {
-        /*
-        // Find bounce direction on hemisphere
-        vec3 random, direction;
-        random_on_hemisphere(&random, &rec.normal);
-        add(&rec.p, &random, &direction);
-
-        // Create bounce ray from hit point
-        ray bounce_ray;
-        create(&bounce_ray.origin, rec.p[0], rec.p[1], rec.p[2]);
-        create(&bounce_ray.direction, direction[0], direction[1], direction[2]);
-
-        // Recursively get color from bounce ray
-        color bounce_color;
-        ray_color(&bounce_ray, depth - 1, list, &bounce_color);
-
-        // Scale bounce color by normal
-        double reflectance = 0.3;
-        multiply(&bounce_color, reflectance, out);
-        return;
-        */
         ray scattered;
         color attenuation;
         if (rec.mat->scatter(r, &rec, &attenuation, &scattered)) {

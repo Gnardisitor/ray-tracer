@@ -80,15 +80,15 @@ int main(void) {
 
     // Set camera parameters
     double aspect_ratio = 16.0 / 9.0;
-    int image_width = 400;
+    int image_width = 1200;
 
     // Defocus blur parameters
     double defocus_angle = 0.6;
     double focus_dist = 10.0;
 
     // Set samples per pixel and max depth
-    int samples_per_pixel = 100;
-    int max_depth = 10;
+    int samples_per_pixel = 500;
+    int max_depth = 50;
 
     // Create camera
     camera cam;
