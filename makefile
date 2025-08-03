@@ -1,11 +1,11 @@
 CC = clang
 CFLAGS = -Wall -Wextra -Werror -std=c99
-OBJ = src/main.o src/ray.o src/vec3.o src/color.o src/hittable.o src/sphere.o src/camera.o
+OBJ = src/main.o src/camera.o src/object.o src/vector.o
 
 ray-tracer: $(OBJ)
 	$(CC) $(CFLAGS) -lm -o ray-tracer $(OBJ)
 
-main.o: src/main.c src/main.h src/vec3.h src/color.h src/ray.h src/hittable.h src/sphere.h src/camera.h
+main.o: src/main.c src/main.h src/camera.h src/object.h src/vector.h
 	$(CC) $(CFLAGS) -c main.c
 
 src/%.o: src/%.c

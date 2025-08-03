@@ -1,6 +1,8 @@
 #include "camera.h"
 #include "main.h"
 
+/* CAMERA DEFINITION */
+
 void camera_create(camera *cam, double x, double y, double z, int samples_per_pixel, int max_depth, double aspect_ratio, int image_width) {
     // Initialize camera parameters
     cam->aspect_ratio = aspect_ratio;
@@ -119,27 +121,51 @@ void ray_color(ray *r, int depth, hittable_list *list, color *out) {
     // Return color based on normal if ray hits an object
     interval ray_t = {0.001, INFINITY};
     if (hit(list, r, &ray_t, &rec)) {
+        /*
         // Find bounce direction on hemisphere
-        vec3 direction;
-        random_on_hemisphere(&direction, &rec.normal);
+        vec3 random, direction;
+        random_on_hemisphere(&random, &rec.normal);
+        add(&rec.p, &random, &direction);
 
         // Create bounce ray from hit point
         ray bounce_ray;
-        bounce_ray.origin[0] = rec.p[0];
-        bounce_ray.origin[1] = rec.p[1];
-        bounce_ray.origin[2] = rec.p[2];
-        bounce_ray.direction[0] = direction[0];
-        bounce_ray.direction[1] = direction[1];
-        bounce_ray.direction[2] = direction[2];
+        create(&bounce_ray.origin, rec.p[0], rec.p[1], rec.p[2]);
+        create(&bounce_ray.direction, direction[0], direction[1], direction[2]);
 
         // Recursively get color from bounce ray
         color bounce_color;
         ray_color(&bounce_ray, depth - 1, list, &bounce_color);
 
         // Scale bounce color by normal
-        (*out)[0] = 0.5 * bounce_color[0];
-        (*out)[1] = 0.5 * bounce_color[1];
-        (*out)[2] = 0.5 * bounce_color[2];
+        double reflectance = 0.3;
+        multiply(&bounce_color, reflectance, out);
+        return;
+        */
+        ray scattered;
+        color attenuation;
+        if (rec.mat->scatter(r, &rec, &attenuation, &scattered)) {
+            if (rec.mat == NULL) {
+            fprintf(stderr, "ERROR: rec.mat is NULL at t=%f\n", rec.t);
+            exit(EXIT_FAILURE);
+            }
+            if (rec.mat->scatter == NULL) {
+                fprintf(stderr, "ERROR: rec.mat->scatter is NULL at t=%f\n", rec.t);
+                exit(EXIT_FAILURE);
+            }
+
+            // Recursively get color from scattered ray
+            color scattered_color;
+            ray_color(&scattered, depth - 1, list, &scattered_color);
+
+            // Scale scattered color by attenuation
+            (*out)[0] = attenuation[0] * scattered_color[0];
+            (*out)[1] = attenuation[1] * scattered_color[1];
+            (*out)[2] = attenuation[2] * scattered_color[2];
+            return;
+        }
+
+        // If material does not scatter, return background color
+        create(out, 0.0, 0.0, 0.0);
         return;
     }
 

@@ -1,8 +1,9 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "hittable.h"
-#include "color.h"
+#include "object.h"
+
+/* CAMERA DEFINITION */
 
 typedef struct {
     double pixel_samples_scale;
